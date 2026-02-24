@@ -51,6 +51,27 @@ function toWebpIfAvailable(assetUrl: string): string {
 	return `${webpUrl}${query}`;
 }
 
+function toReadableLabel(value: string): string {
+	return value
+		.replace(/[-_]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function deriveAltFromSrc(src: string): string {
+	try {
+		const url = new URL(src, 'https://csrspinozzi.com');
+		const filename = path.basename(url.pathname);
+		const withoutExt = filename.replace(/\.[a-z0-9]+$/i, '');
+		const withoutSizeSuffix = withoutExt.replace(/-\d+x\d+$/i, '');
+		const label = toReadableLabel(withoutSizeSuffix);
+		return label || 'Project image';
+	} catch {
+		return 'Project image';
+	}
+}
+
 function optimizeImageTags(html: string): string {
 	return html.replace(/<img\b[^>]*>/g, (tag) => {
 		let next = tag;
@@ -72,7 +93,38 @@ function optimizeImageTags(html: string): string {
 			next = next.replace('<img', '<img decoding="async"');
 		}
 
+		const fallbackAlt = srcMatch ? deriveAltFromSrc(srcMatch[2]) : 'Project image';
+		if (!/\salt=/i.test(next)) {
+			next = next.replace('<img', `<img alt="${fallbackAlt}"`);
+		} else {
+			next = next.replace(/\salt=(["'])\s*\1/i, ` alt="${fallbackAlt}"`);
+		}
+
 		return next;
+	});
+}
+
+function addAccessibleLabelsToImageLinks(html: string): string {
+	return html.replace(/<a\b([^>]*)>(\s*<img\b[^>]*>\s*)<\/a>/gi, (match, attrs, body) => {
+		if (/\saria-label=/i.test(attrs)) return match;
+
+		const altMatch = body.match(/\salt=(["'])([^"']+)\1/i);
+		let label = altMatch?.[2]?.trim() || '';
+
+		if (!label) {
+			const hrefMatch = attrs.match(/\shref=(["'])([^"']+)\1/i);
+			if (hrefMatch) {
+				try {
+					const host = new URL(hrefMatch[2], 'https://csrspinozzi.com').hostname.replace(/^www\./, '');
+					label = `Open ${host}`;
+				} catch {
+					label = 'Open link';
+				}
+			}
+		}
+
+		if (!label) label = 'Open link';
+		return `<a${attrs} aria-label="${label}">${body}</a>`;
 	});
 }
 
@@ -94,10 +146,10 @@ export function transformWordPressHtml(html: string): string {
 			const embedUrl = getYoutubeEmbedUrl(youtubeUrl);
 			if (!embedUrl) return match;
 
-			const iframe = `<iframe src="${embedUrl}" title="YouTube video player" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+			const iframe = `<iframe src="${embedUrl}" title="YouTube video player" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
 			return `${before}${iframe}${close}`;
 		}
 	);
 
-	return optimizeImageTags(withYoutubeEmbeds);
+	return addAccessibleLabelsToImageLinks(optimizeImageTags(withYoutubeEmbeds));
 }
