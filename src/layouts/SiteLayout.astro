@@ -1,0 +1,182 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+	description: string;
+	path?: string;
+	image?: string;
+	schema?: Record<string, unknown>[];
+	bodyClass?: string;
+	wpPostId?: number;
+	useWpStyles?: boolean;
+	showHeader?: boolean;
+}
+
+const {
+	title,
+	description,
+	path = '/',
+	image = '/og-image.svg',
+	schema = [],
+	bodyClass = '',
+	wpPostId,
+	useWpStyles = false,
+	showHeader = true,
+} = Astro.props as Props;
+
+const origin = Astro.site ?? new URL('https://csrspinozzi.com');
+const canonical = new URL(path, origin).toString();
+const ogImage = new URL(image, origin).toString();
+const normalize = (value: string) => (value.endsWith('/') && value !== '/' ? value.slice(0, -1) : value);
+const currentPath = normalize(path);
+const isActive = (href: string) => currentPath === normalize(href);
+const wpStyles = [
+	'/wp-css/reset.css',
+	'/wp-css/theme.css',
+	'/wp-css/header-footer.css',
+	'/wp-css/custom-frontend.min.css',
+	'/wp-css/post-34.css',
+	'/wp-css/widget-image.min.css',
+	'/wp-css/e-animation-grow.min.css',
+	'/wp-css/custom-pro-widget-nav-menu.min.css',
+	'/wp-css/sticky.min.css',
+	'/wp-css/fadeInDown.min.css',
+	'/wp-css/fadeIn.min.css',
+	'/wp-css/widget-heading.min.css',
+	'/wp-css/widget-social-icons.min.css',
+	'/wp-css/custom-apple-webkit.min.css',
+	'/wp-css/popup.min.css',
+	'/wp-css/widget-video.min.css',
+	'/wp-css/shapes.min.css',
+	'/wp-css/motion-fx.min.css',
+	'/wp-css/base-desktop.css',
+	'/wp-css/post-54.css',
+	'/wp-css/post-1608.css',
+	'/wp-css/post-72.css',
+];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+			<link rel="canonical" href={canonical} />
+			<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+			<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+			<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+			<link rel="icon" href="/favicon.ico" />
+			<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={ogImage} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImage} />
+
+		{
+			useWpStyles &&
+				wpStyles.map((href) => <link rel="stylesheet" href={href} media="all" />)
+		}
+		{
+			useWpStyles &&
+				wpPostId && (
+					<link
+						rel="stylesheet"
+						href={`/wp-css/post-${wpPostId}.css`}
+						media="all"
+					/>
+				)
+		}
+		{useWpStyles && <script src="/wp-compat.js" defer></script>}
+
+		{schema.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
+	</head>
+		<body class:list={[bodyClass, { 'has-site-header': showHeader }]}>
+			{
+				showHeader && (
+					<header class="site-header" aria-label="Primary">
+						<div class="site-header__inner">
+							<a href="/" class="site-brand">
+								<img src="/brand/logo-64.png" alt="csrspinozzi" width="24" height="24" loading="eager" decoding="async" />
+								<span>csrspinozzi</span>
+							</a>
+							<div class="site-nav-shell" data-site-nav-shell>
+								<button class="site-nav-toggle" type="button" aria-label="Menu" aria-controls="site-nav" aria-expanded="false">
+									<span class="site-nav-toggle__icon" aria-hidden="true"></span>
+									<span class="sr-only">Menu</span>
+								</button>
+								<nav id="site-nav" class="site-nav" aria-label="Menu">
+									<ul class="site-nav__list">
+										<li><a class:list={['site-nav__link', { active: isActive('/about-me') }]} href="/about-me">about</a></li>
+										<li class="site-nav__has-submenu">
+											<a
+												class:list={['site-nav__link', { active: isActive('/jitsi-case-study') || isActive('/meerkapp-case-study-english') || isActive('/teduka-case-study') }]}
+												href="/jitsi-case-study"
+											>
+												projects
+											</a>
+											<ul class="site-nav__submenu">
+												<li><a class="site-nav__sublink" href="/jitsi-case-study">Jitsi UI</a></li>
+												<li><a class="site-nav__sublink" href="/meerkapp-case-study-english">Meerkapp</a></li>
+												<li><a class="site-nav__sublink" href="/teduka-case-study">Teduka</a></li>
+											</ul>
+										</li>
+										<li>
+											<a class="site-nav__link" href="https://www.behance.net/csrspinozzi" target="_blank" rel="noopener noreferrer">
+												behance
+											</a>
+										</li>
+										<li>
+											<a
+												class="site-nav__link"
+												href="https://drive.google.com/file/d/1lBE1WyUwU4kp2r1y102ExddOMRsx8ip2/view?usp=drive_link"
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												resume
+											</a>
+										</li>
+									</ul>
+								</nav>
+							</div>
+						</div>
+					</header>
+				)
+			}
+			<slot />
+			<script is:inline>
+				(() => {
+					const shell = document.querySelector('[data-site-nav-shell]');
+					if (!shell) return;
+					const button = shell.querySelector('.site-nav-toggle');
+					const nav = shell.querySelector('.site-nav');
+					if (!button || !nav) return;
+					const closeMenu = () => {
+						shell.classList.remove('is-open');
+						button.setAttribute('aria-expanded', 'false');
+					};
+					button.addEventListener('click', () => {
+						const nextOpen = !shell.classList.contains('is-open');
+						shell.classList.toggle('is-open', nextOpen);
+						button.setAttribute('aria-expanded', String(nextOpen));
+					});
+					document.addEventListener('click', (event) => {
+						if (!shell.contains(event.target)) closeMenu();
+					});
+					window.addEventListener('resize', () => {
+						if (window.innerWidth > 920) closeMenu();
+					});
+				})();
+			</script>
+		</body>
+	</html>
