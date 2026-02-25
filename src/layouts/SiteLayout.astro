@@ -93,6 +93,7 @@ const socialLinks = {
 								</button>
 								<nav id="site-nav" class="site-nav" aria-label="Menu">
 									<ul class="site-nav__list">
+										<li class="site-nav__mobile-only"><a class:list={['site-nav__link', { active: isActive('/') }]} href="/">home</a></li>
 										<li><a class:list={['site-nav__link', { active: isActive('/about-me') }]} href="/about-me">about</a></li>
 										<li class="site-nav__has-submenu">
 											<a
@@ -150,7 +151,46 @@ const socialLinks = {
 			</footer>
 			<script is:inline>
 				(() => {
+					const header = document.querySelector('.site-header');
 					const shell = document.querySelector('[data-site-nav-shell]');
+					const canUseNav = !!shell;
+					if (!header && !canUseNav) return;
+
+					let lastY = window.scrollY || 0;
+					let ticking = false;
+					const applyHeaderVisibility = () => {
+						ticking = false;
+						if (!header) return;
+						const currentY = window.scrollY || 0;
+						const delta = currentY - lastY;
+						if (Math.abs(delta) < 6) return;
+
+						if (canUseNav && shell.classList.contains('is-open')) {
+							header.classList.remove('site-header--hidden');
+							lastY = currentY;
+							return;
+						}
+
+						if (currentY <= 8) {
+							header.classList.remove('site-header--hidden');
+						} else if (delta > 0 && currentY > 120) {
+							header.classList.add('site-header--hidden');
+						} else if (delta < 0) {
+							header.classList.remove('site-header--hidden');
+						}
+						lastY = currentY;
+					};
+
+					window.addEventListener(
+						'scroll',
+						() => {
+							if (ticking) return;
+							ticking = true;
+							requestAnimationFrame(applyHeaderVisibility);
+						},
+						{ passive: true }
+					);
+
 					if (!shell) return;
 					const button = shell.querySelector('.site-nav-toggle');
 					const nav = shell.querySelector('.site-nav');
@@ -158,11 +198,13 @@ const socialLinks = {
 					const closeMenu = () => {
 						shell.classList.remove('is-open');
 						button.setAttribute('aria-expanded', 'false');
+						if (header) header.classList.remove('site-header--hidden');
 					};
 					button.addEventListener('click', () => {
 						const nextOpen = !shell.classList.contains('is-open');
 						shell.classList.toggle('is-open', nextOpen);
 						button.setAttribute('aria-expanded', String(nextOpen));
+						if (nextOpen && header) header.classList.remove('site-header--hidden');
 					});
 					document.addEventListener('click', (event) => {
 						if (!shell.contains(event.target)) closeMenu();
