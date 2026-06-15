@@ -1,0 +1,5 @@
+'use server';
+import { revalidatePath } from 'next/cache'; import { z } from 'zod'; import { createServerSupabase } from '@/lib/supabase-server';
+const projectSchema=z.object({name:z.string().min(3),code:z.string().min(2),address:z.string().min(3),budget:z.coerce.number().positive(),diversion_goal:z.coerce.number().min(0).max(100)});
+export async function createProject(input: unknown){const data=projectSchema.parse(input); const supabase=await createServerSupabase(); const {error}=await supabase.from('projects').insert(data); if(error) throw new Error(error.message); revalidatePath('/projects');}
+export async function uploadDocument(formData: FormData){const file=formData.get('file') as File; const projectId=String(formData.get('project_id')); const supabase=await createServerSupabase(); const path=`${projectId}/${Date.now()}-${file.name}`; const {error}=await supabase.storage.from('project-documents').upload(path,file); if(error) throw new Error(error.message); await supabase.from('documents').insert({project_id:projectId,name:file.name,path,type:file.type}); revalidatePath('/documents');}

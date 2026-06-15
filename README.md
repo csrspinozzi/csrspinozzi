@@ -1,43 +1,61 @@
-# Astro Starter Kit: Minimal
+# Circular House Construction Management Platform
 
-```sh
-npm create astro@latest -- --template minimal
+A Next.js 15, TypeScript, Tailwind CSS, shadcn/ui-inspired platform for managing circular residential construction projects.
+
+## Stack
+
+- Next.js 15 App Router and React 19
+- TypeScript
+- Tailwind CSS with shadcn/ui-style primitives
+- Supabase database, Auth, Storage, RLS, and Realtime
+- React Hook Form and Zod for validated CRUD forms
+- TanStack Table for material passports
+- Recharts for embodied-carbon analytics
+- Lucide Icons
+
+## Modules
+
+- Landing page and authenticated dashboard shell
+- Project CRUD foundation with validated React Hook Form forms
+- Materials passport table with circularity, supplier, and embodied-carbon fields
+- Task board organized by status and priority
+- Document storage module targeting the `project-documents` Supabase bucket
+- Role permission helpers for owner, project manager, site lead, supplier, and viewer roles
+- Supabase SQL migration with RLS policies, storage policies, realtime publication, and seed data
+
+## Getting started
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Create `.env.local` with:
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Supabase setup
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Apply the migration and seed data in order:
 
-Any static assets, like images, can be placed in the `public/` directory.
+```bash
+supabase db push
+supabase db reset --seed supabase/seed/seed.sql
+```
 
-## 🧞 Commands
+The migration creates `profiles`, `projects`, `project_members`, `materials`, `tasks`, and `documents`, enables RLS, creates role-aware policies, creates the private `project-documents` bucket, and adds project tables to Supabase Realtime.
 
-All commands are run from the root of the project, from a terminal:
+## Permissions
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Permissions are enforced in two layers:
 
-## 👀 Want to learn more?
+1. PostgreSQL RLS policies in `supabase/migrations/001_initial_schema.sql`.
+2. UI permission helpers in `src/lib/permissions.ts`.
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Notes
+
+This repository was converted from a static Astro/WordPress export into a Next.js product application. Existing public media assets are retained for future marketing content reuse.

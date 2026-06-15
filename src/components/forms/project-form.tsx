@@ -1,0 +1,5 @@
+'use client';
+import { zodResolver } from '@hookform/resolvers/zod'; import { useForm } from 'react-hook-form'; import { z } from 'zod'; import { Button } from '@/components/ui/button'; import { Input } from '@/components/ui/input'; import { Label } from '@/components/ui/label';
+const schema=z.object({name:z.string().min(3),code:z.string().min(2),address:z.string().min(3),budget:z.coerce.number().positive(),diversion_goal:z.coerce.number().min(0).max(100)});
+export type ProjectFormData=z.infer<typeof schema>;
+export function ProjectForm({onSubmit}:{onSubmit:(data:ProjectFormData)=>void}){const {register,handleSubmit,formState:{errors}}=useForm<ProjectFormData>({resolver:zodResolver(schema),defaultValues:{diversion_goal:90}}); return <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">{(['name','code','address','budget','diversion_goal'] as const).map(f=><div key={f} className="space-y-1"><Label htmlFor={f}>{f.replace('_',' ')}</Label><Input id={f} {...register(f)}/>{errors[f]&&<p className="text-xs text-destructive">{errors[f]?.message}</p>}</div>)}<Button className="md:col-span-2" type="submit">Save project</Button></form>}

@@ -1,0 +1,2 @@
+import { AppShell } from '@/components/layout/app-shell'; import { roles } from '@/lib/permissions';
+export default function Settings(){return <AppShell><h1 className="mb-6 text-3xl font-bold">Roles & Permissions</h1><div className="grid gap-3">{roles.map(r=><div key={r} className="rounded-xl border bg-card p-4"><b>{r}</b><p className="text-sm text-muted-foreground">Managed in Supabase profiles and enforced by RLS policies plus UI permission checks.</p></div>)}</div></AppShell>}

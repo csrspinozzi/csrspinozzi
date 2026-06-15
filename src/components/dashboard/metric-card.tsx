@@ -1,0 +1,2 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+export function MetricCard({title,value,detail}:{title:string;value:string;detail:string}){return <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{title}</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold">{value}</div><p className="text-sm text-muted-foreground">{detail}</p></CardContent></Card>}
