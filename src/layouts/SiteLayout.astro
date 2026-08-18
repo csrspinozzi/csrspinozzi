@@ -51,6 +51,7 @@ const socialLinks = {
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
+		<link rel="preload" href="/fonts/ataero/AtAeroVARVF.woff2" as="font" type="font/woff2" crossorigin />
 		<title>{title}</title>
 		<meta name="description" content={description} />
 			<link rel="canonical" href={canonical} />
@@ -151,6 +152,26 @@ const socialLinks = {
 			</footer>
 			<script is:inline>
 				(() => {
+					const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+					if (!reduceMotion && 'IntersectionObserver' in window) {
+						const revealTargets = Array.from(document.querySelectorAll('.wp-shell .elementor-invisible'))
+							.filter((element) => element.getBoundingClientRect().top > window.innerHeight * 0.75);
+						const revealObserver = new IntersectionObserver(
+							(entries) => {
+								for (const entry of entries) {
+									if (!entry.isIntersecting) continue;
+									entry.target.classList.add('is-revealed');
+									revealObserver.unobserve(entry.target);
+								}
+							},
+							{ rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+						);
+						revealTargets.forEach((element) => {
+							element.classList.add('reveal-pending');
+							revealObserver.observe(element);
+						});
+					}
+
 					const header = document.querySelector('.site-header');
 					const shell = document.querySelector('[data-site-nav-shell]');
 					const canUseNav = !!shell;

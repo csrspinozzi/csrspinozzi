@@ -37,7 +37,21 @@ function getYoutubeEmbedUrl(url: string): string | null {
 	}
 }
 
+function normalizeOwnAssetUrl(assetUrl: string): string {
+	try {
+		const parsed = new URL(assetUrl, 'https://csrspinozzi.com');
+		const isOwnHost = ['csrspinozzi.com', 'www.csrspinozzi.com'].includes(parsed.hostname);
+		if (isOwnHost && parsed.pathname.startsWith('/wp-content/uploads/')) {
+			return `${parsed.pathname}${parsed.search}`;
+		}
+	} catch {
+		// Keep malformed or relative URLs untouched.
+	}
+	return assetUrl;
+}
+
 function toWebpIfAvailable(assetUrl: string): string {
+	assetUrl = normalizeOwnAssetUrl(assetUrl);
 	if (!assetUrl.startsWith('/wp-content/uploads/')) return assetUrl;
 	const parsed = assetUrl.split('?')[0];
 	const ext = path.extname(parsed).toLowerCase();
@@ -83,6 +97,18 @@ function optimizeImageTags(html: string): string {
 			if (optimizedSrc !== src) {
 				next = next.replace(srcMatch[0], ` src="${optimizedSrc}"`);
 			}
+		}
+
+		const srcsetMatch = next.match(/\ssrcset=(["'])([^"']+)\1/i);
+		if (srcsetMatch) {
+			const optimizedSrcset = srcsetMatch[2]
+				.split(',')
+				.map((candidate) => {
+					const [url, descriptor] = candidate.trim().split(/\s+/, 2);
+					return [toWebpIfAvailable(url), descriptor].filter(Boolean).join(' ');
+				})
+				.join(', ');
+			next = next.replace(srcsetMatch[0], ` srcset="${optimizedSrcset}"`);
 		}
 
 		if (!/\sloading=/i.test(next)) {
@@ -146,7 +172,7 @@ export function transformWordPressHtml(html: string): string {
 			const embedUrl = getYoutubeEmbedUrl(youtubeUrl);
 			if (!embedUrl) return match;
 
-			const iframe = `<iframe src="${embedUrl}" title="YouTube video player" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+			const iframe = `<iframe src="${embedUrl}" title="YouTube video player" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
 			return `${before}${iframe}${close}`;
 		}
 	);
